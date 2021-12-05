@@ -16,6 +16,10 @@ import { sequenceDataSource } from '../helpers/sequence-data-source';
 import { SampleDetailsData } from '../data/SampleDetailsDataset';
 import { serializeSampleDetailsEntryToRaw } from '../data/SampleDetailsEntry';
 import { TaxoniumIntegration } from '../services/external-integrations/TaxoniumIntegration';
+import { ExternalLink } from './ExternalLink';
+import { getLinkToFasta } from '../data/api-lapis';
+import { useAsync } from 'react-async';
+import { useDeepCompareMemo } from '../helpers/deep-compare-hooks';
 
 export interface Props {
   selector: LocationDateVariantSelector;
@@ -39,6 +43,10 @@ export const FocusVariantHeaderControls = React.memo(
     const hideDropdownFunc = (_: any) => {
       setShowDropdown(false);
     };
+    const linkToFastaPromise = useDeepCompareMemo(() => getLinkToFasta(false, selector), [selector]);
+    const { data: fastaLink } = useAsync({ promise: linkToFastaPromise });
+    const linkToAlignedFastaPromise = useDeepCompareMemo(() => getLinkToFasta(true, selector), [selector]);
+    const { data: alignedFastaLink } = useAsync({ promise: linkToAlignedFastaPromise });
 
     const [isDownloadingSequenceList, setIsDownloadingSequenceList] = useState(false);
     const downloadSequenceList = async () => {
@@ -69,21 +77,30 @@ export const FocusVariantHeaderControls = React.memo(
 
     return (
       <>
-        <Button
-          className='mr-2 mt-3'
-          size='sm'
-          variant='secondary'
-          onClick={downloadSequenceList}
-          disabled={isDownloadingSequenceList}
-        >
-          {!isDownloadingSequenceList ? (
+        <Dropdown as={ButtonGroup} className='mr-2 mt-3' size='sm'>
+          <Button variant='secondary' onClick={downloadSequenceList} disabled={isDownloadingSequenceList}>
+            {!isDownloadingSequenceList ? (
+              <>
+                Sequence list <FaDownload className='inline-block ml-1' />
+              </>
+            ) : (
+              <>Downloading...</>
+            )}
+          </Button>
+          {sequenceDataSource === 'open' && (
             <>
-              Sequence list <FaDownload className='inline-block ml-1' />
+              <Dropdown.Toggle split variant='secondary' />
+              <Dropdown.Menu>
+                <ExternalLink url={fastaLink ?? ''}>
+                  <Dropdown.Item as={Button}>FASTA</Dropdown.Item>
+                </ExternalLink>
+                <ExternalLink url={alignedFastaLink ?? ''}>
+                  <Dropdown.Item as={Button}>FASTA (aligned)</Dropdown.Item>
+                </ExternalLink>
+              </Dropdown.Menu>
             </>
-          ) : (
-            <>Downloading...</>
           )}
-        </Button>
+        </Dropdown>
         <DropdownButton
           as={ButtonGroup}
           title='Other websites'

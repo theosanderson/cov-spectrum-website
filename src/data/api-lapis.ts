@@ -182,21 +182,26 @@ export async function getLinkToStrainNames(
   selector: LocationDateVariantSelector,
   orderAndLimit?: OrderAndLimitConfig
 ): Promise<string> {
-  const params = new URLSearchParams();
-  _addDefaultsToSearchParams(params);
-  _addOrderAndLimitToSearchParams(params, orderAndLimit);
-  selector = await _mapCountryName(selector);
-  addLocationSelectorToUrlSearchParams(selector.location, params);
-  if (selector.dateRange) {
-    addDateRangeSelectorToUrlSearchParams(selector.dateRange, params);
-  }
-  if (selector.variant) {
-    addVariantSelectorToUrlSearchParams(selector.variant, params);
-  }
-  return `${HOST}/sample/strain-names?${params.toString()}`;
+  return getLinkTo('strain-names', selector, orderAndLimit);
 }
 
 export async function getLinkToGisaidEpiIsl(
+  selector: LocationDateVariantSelector,
+  orderAndLimit?: OrderAndLimitConfig
+): Promise<string> {
+  return getLinkTo('gisaid-epi-isl', selector, orderAndLimit);
+}
+
+export async function getLinkToFasta(
+  aligned: boolean,
+  selector: LocationDateVariantSelector,
+  orderAndLimit?: OrderAndLimitConfig
+): Promise<string> {
+  return getLinkTo(aligned ? 'fasta-aligned' : 'fasta', selector, orderAndLimit);
+}
+
+export async function getLinkTo(
+  endpoint: string,
   selector: LocationDateVariantSelector,
   orderAndLimit?: OrderAndLimitConfig
 ): Promise<string> {
@@ -211,7 +216,7 @@ export async function getLinkToGisaidEpiIsl(
   if (selector.variant) {
     addVariantSelectorToUrlSearchParams(selector.variant, params);
   }
-  return `${HOST}/sample/gisaid-epi-isl?${params.toString()}`;
+  return `${HOST}/sample/${endpoint}?${params.toString()}`;
 }
 
 async function _fetchAggSamples(
